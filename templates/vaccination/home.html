@@ -1,0 +1,93 @@
+{% extends 'vaccination/base.html' %}
+{% load static %}
+
+{% block title %}VaxCare — Child Vaccination Management{% endblock %}
+{% block page_title %}Welcome to VaxCare{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <i class="fas fa-shield-virus"></i> Trusted Vaccination Platform
+        </div>
+        <h1 class="hero-title">
+            Protect Your Child's <span class="text-gradient">Future</span>
+        </h1>
+        <p class="hero-subtitle">
+            Track, schedule, and manage your child's vaccinations with ease.
+            Stay on top of immunization schedules and never miss a vaccine.
+        </p>
+        <div class="hero-actions">
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus"></i> Get Started
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        </div>
+    </div>
+    <div class="hero-illustration">
+        <div class="hero-card">
+            <i class="fas fa-baby hero-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2)">
+            <i class="fas fa-children"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_children }}</span>
+            <span class="stat-label">Children Registered</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c)">
+            <i class="fas fa-syringe"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_vaccinations }}</span>
+            <span class="stat-label">Vaccinations Done</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe)">
+            <i class="fas fa-hospital"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_hospitals }}</span>
+            <span class="stat-label">Partner Hospitals</span>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<section class="features-section">
+    <h2 class="section-title">Why Choose VaxCare?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+            <h3>Smart Scheduling</h3>
+            <p>Age-based vaccine recommendations ensure your child never misses a critical immunization.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-bell"></i></div>
+            <h3>Timely Reminders</h3>
+            <p>Get notified about upcoming appointments and overdue vaccines well in advance.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-certificate"></i></div>
+            <h3>Digital Certificates</h3>
+            <p>Receive vaccination certificates instantly after each completed immunization.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-lock"></i></div>
+            <h3>Secure Records</h3>
+            <p>All vaccination records are stored safely and accessible anytime from your dashboard.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}{{ child.name }} — VaxCare{% endblock %}
+{% block page_title %}{{ child.name }}{% endblock %}
+
+{% block content %}
+<!-- Child Info Card -->
+<div class="card child-profile-card">
+    <div class="card-body">
+        <div class="child-profile">
+            <div class="profile-avatar large">
+                {% if child.gender == 'M' %}
+                <i class="fas fa-mars" style="color: #4facfe;"></i>
+                {% elif child.gender == 'F' %}
+                <i class="fas fa-venus" style="color: #f093fb;"></i>
+                {% else %}
+                <i class="fas fa-genderless" style="color: #764ba2;"></i>
+                {% endif %}
+            </div>
+            <div class="profile-details">
+                <h2>{{ child.name }}</h2>
+                <div class="profile-meta">
+                    <span><i class="fas fa-cake-candles"></i> {{ child.age_display }} (DOB: {{ child.dob|date:"M d, Y"
+                        }})</span>
+                    <span><i class="fas fa-weight-scale"></i> {{ child.weight }} kg</span>
+                    <span><i class="fas fa-tint"></i> {{ child.blood_group }}</span>
+                    <span><i class="fas fa-venus-mars"></i> {{ child.get_gender_display }}</span>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <a href="{% url 'edit_child' child.id %}" class="btn btn-sm btn-outline">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'book_appointment' %}?child={{ child.id }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-syringe"></i> Book Vaccine
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Due Vaccines -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-list-check"></i> Vaccine Schedule</h3>
+        </div>
+        <div class="card-body">
+            {% if due_vaccines %}
+            <div class="vaccine-schedule-list">
+                {% for item in due_vaccines %}
+                <div class="schedule-item schedule-{{ item.status }}">
+                    <div class="schedule-status-dot"></div>
+                    <div class="schedule-info">
+                        <strong>{{ item.vaccine.name }}</strong>
+                        <small>Dose {{ item.vaccine.dose_number }} · Recommended at {{ item.recommended_age }}
+                            months</small>
+                    </div>
+                    <span class="status-badge status-{{ item.status }}">
+                        {% if item.status == 'overdue' %}Overdue
+                        {% elif item.status == 'upcoming' %}Due Soon
+                        {% else %}Upcoming
+                        {% endif %}
+                    </span>
+                    {% if item.status != 'future' %}
+                    <a href="{% url 'book_appointment' %}?child={{ child.id }}&vaccine={{ item.vaccine.id }}"
+                        class="btn btn-xs btn-primary" title="Book now">
+                        <i class="fas fa-calendar-plus"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-check-double"></i>
+                <p>All vaccines up to date! 🎉</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Missed Vaccines Alert -->
+    {% if missed_vaccines %}
+    <div class="card card-warning">
+        <div class="card-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Missed Vaccines</h3>
+        </div>
+        <div class="card-body">
+            <div class="missed-list">
+                {% for vaccine in missed_vaccines %}
+                <div class="missed-item">
+                    <i class="fas fa-times-circle"></i>
+                    <span>{{ vaccine.name }} (Dose {{ vaccine.dose_number }})</span>
+                    <a href="{% url 'book_appointment' %}?child={{ child.id }}&vaccine={{ vaccine.id }}"
+                        class="btn btn-xs btn-danger">Book Now</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Appointments -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-calendar-alt"></i> Appointments</h3>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Vaccine</th>
+                        <th>Hospital</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appt in appointments %}
+                    <tr>
+                        <td>{{ appt.vaccine.name }}</td>
+                        <td>{{ appt.hospital.name }}</td>
+                        <td>{{ appt.preferred_date|date:"M d, Y" }}</td>
+                        <td><span class="status-badge status-{{ appt.status }}">{{ appt.get_status_display }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <i class="fas fa-calendar"></i>
+            <p>No appointments for this child</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Vaccination Records -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-file-medical"></i> Vaccination Records</h3>
+    </div>
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Vaccine</th>
+                        <th>Date</th>
+                        <th>Notes</th>
+                        <th>Certificate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr>
+                        <td>{{ rec.vaccine.name }}</td>
+                        <td>{{ rec.date_administered|date:"M d, Y" }}</td>
+                        <td>{{ rec.notes|default:"-" }}</td>
+                        <td>
+                            {% if rec.certificate %}
+                            <a href="{% url 'certificate_view' rec.id %}" class="btn btn-xs btn-outline">
+                                <i class="fas fa-certificate"></i> View
+                            </a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <i class="fas fa-file-medical"></i>
+            <p>No vaccination records yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete -->
+<div class="card card-danger-zone">
+    <div class="card-header">
+        <h3><i class="fas fa-trash"></i> Danger Zone</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'delete_child' child.id %}"
+            onsubmit="return confirm('Are you sure you want to remove {{ child.name }}? This cannot be undone.')">
+            {% csrf_token %}
+            <p>Permanently remove {{ child.name }} and all associated records.</p>
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Delete {{ child.name }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Certificate — VaxCare{% endblock %}
+{% block page_title %}Vaccination Certificate{% endblock %}
+
+{% block content %}
+<div class="certificate-container">
+    <div class="certificate-card" id="certificateCard">
+        <div class="certificate-border">
+            <div class="certificate-content">
+                <div class="certificate-header">
+                    <div class="certificate-logo">
+                        <i class="fas fa-shield-virus"></i>
+                    </div>
+                    <h1>Certificate of Vaccination</h1>
+                    <p class="certificate-subtitle">VaxCare — Child Vaccination Management System</p>
+                </div>
+
+                <div class="certificate-body">
+                    <p class="certificate-text">This is to certify that</p>
+                    <h2 class="certificate-name">{{ record.child.name }}</h2>
+                    <p class="certificate-text">
+                        Date of Birth: <strong>{{ record.child.dob|date:"F d, Y" }}</strong>
+                        &nbsp;|&nbsp;
+                        Blood Group: <strong>{{ record.child.blood_group }}</strong>
+                    </p>
+                    <p class="certificate-text">has successfully received the vaccination</p>
+                    <h3 class="certificate-vaccine">{{ record.vaccine.name }}</h3>
+                    <p class="certificate-text">
+                        on <strong>{{ record.date_administered|date:"F d, Y" }}</strong>
+                    </p>
+                    {% if record.appointment.hospital %}
+                    <p class="certificate-text">
+                        at <strong>{{ record.appointment.hospital.name }}</strong>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="certificate-footer">
+                    <div class="certificate-id">
+                        <span>Certificate ID:</span>
+                        <strong>{{ certificate.certificate_id }}</strong>
+                    </div>
+                    <div class="certificate-date">
+                        <span>Issued on:</span>
+                        <strong>{{ certificate.issued_at|date:"F d, Y" }}</strong>
+                    </div>
+                </div>
+
+                <div class="certificate-seal">
+                    <i class="fas fa-stamp"></i>
+                    <span>VERIFIED</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="certificate-actions">
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print"></i> Print Certificate
+        </button>
+        <a href="{% url 'parent_dashboard' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

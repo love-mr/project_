@@ -1,0 +1,72 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Login — VaxCare{% endblock %}
+{% block page_title %}Login{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to your account</p>
+        </div>
+
+        <form method="post" action="{% url 'login' %}" class="auth-form" id="loginForm">
+            {% csrf_token %}
+
+            <!-- Role Tabs -->
+            <div class="role-tabs">
+                <label class="role-tab">
+                    <input type="radio" name="user_type" value="parent" checked>
+                    <span class="role-tab-label">
+                        <i class="fas fa-user"></i> Parent
+                    </span>
+                </label>
+                <label class="role-tab">
+                    <input type="radio" name="user_type" value="staff">
+                    <span class="role-tab-label">
+                        <i class="fas fa-user-nurse"></i> Staff
+                    </span>
+                </label>
+                <label class="role-tab">
+                    <input type="radio" name="user_type" value="admin">
+                    <span class="role-tab-label">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username"
+                    required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" class="form-input"
+                    placeholder="Enter your password" required>
+            </div>
+
+            <div class="form-group captcha-group">
+                <label><i class="fas fa-robot"></i> Captcha: <strong>{{ captcha_q }}</strong></label>
+                <input type="text" name="captcha_answer" class="form-input" placeholder="Your answer" required
+                    autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account?
+                <a href="{% url 'register' %}">Create one</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

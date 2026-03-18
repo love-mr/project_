@@ -1,0 +1,62 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Register — VaxCare{% endblock %}
+{% block page_title %}Create Account{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h2>Create Account</h2>
+            <p>Join VaxCare to manage vaccinations</p>
+        </div>
+
+        <!-- Role Selection Tabs -->
+        <div class="role-tabs" style="margin-bottom: 1.5rem;">
+            <a href="{% url 'register' %}?type=parent"
+                class="role-tab-link {% if user_type == 'parent' %}active{% endif %}">
+                <i class="fas fa-user"></i> Parent
+            </a>
+            <a href="{% url 'register' %}?type=staff"
+                class="role-tab-link {% if user_type == 'staff' %}active{% endif %}">
+                <i class="fas fa-user-nurse"></i> Staff
+            </a>
+        </div>
+
+        <form method="post" action="{% url 'register' %}" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="user_type" value="{{ user_type }}">
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="field-error">
+                    {% for error in field.errors %}
+                    <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if field.help_text %}
+                <small class="field-help">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account?
+                <a href="{% url 'login' %}">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

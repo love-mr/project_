@@ -1,0 +1,56 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}All Records — VaxCare{% endblock %}
+{% block page_title %}All Vaccination Records{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-clipboard-list"></i> Complete Vaccination Records</h3>
+        <span class="badge badge-info">{{ records|length }} records</span>
+    </div>
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Child</th>
+                        <th>Vaccine</th>
+                        <th>Date</th>
+                        <th>Hospital</th>
+                        <th>Administered By</th>
+                        <th>Notes</th>
+                        <th>Certificate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr>
+                        <td><strong>{{ rec.child.name }}</strong></td>
+                        <td>{{ rec.vaccine.name }}</td>
+                        <td>{{ rec.date_administered|date:"M d, Y" }}</td>
+                        <td>{{ rec.appointment.hospital.name }}</td>
+                        <td>{{ rec.administered_by.username|default:"-" }}</td>
+                        <td>{{ rec.notes|default:"-" }}</td>
+                        <td>
+                            {% if rec.certificate %}
+                            <a href="{% url 'staff_certificate_view' rec.id %}" class="btn btn-xs btn-outline">
+                                <i class="fas fa-certificate"></i> View
+                            </a>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <p>No vaccination records in the system</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

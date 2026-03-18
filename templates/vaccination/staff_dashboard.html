@@ -1,0 +1,223 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Staff Dashboard — VaxCare{% endblock %}
+{% block page_title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f6d365, #fda085)">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_pending }}</span>
+            <span class="stat-label">Pending Approvals</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb)">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_approved }}</span>
+            <span class="stat-label">Approved</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7)">
+            <i class="fas fa-shield-virus"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_completed }}</span>
+            <span class="stat-label">Vaccinations Done</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2)">
+            <i class="fas fa-children"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_children }}</span>
+            <span class="stat-label">Children</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Pending Appointments -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-hourglass-half"></i> Pending Appointments</h3>
+            <span class="badge badge-warning">{{ total_pending }}</span>
+        </div>
+        <div class="card-body">
+            {% if pending %}
+            <div class="appointment-list">
+                {% for appt in pending %}
+                <div class="appointment-card">
+                    <div class="appointment-info">
+                        <h4>{{ appt.child.name }}</h4>
+                        <p><i class="fas fa-user"></i> Parent: {{ appt.child.parent.username }}</p>
+                        <p><i class="fas fa-syringe"></i> {{ appt.vaccine.name }}</p>
+                        <p><i class="fas fa-hospital"></i> {{ appt.hospital.name }}</p>
+                        <p><i class="fas fa-calendar"></i> {{ appt.preferred_date|date:"M d, Y" }}</p>
+                        {% if appt.notes %}
+                        <p><i class="fas fa-sticky-note"></i> {{ appt.notes }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="appointment-actions">
+                        <a href="{% url 'approve_appointment' appt.id %}" class="btn btn-sm btn-success"
+                            onclick="return confirm('Approve this appointment?')">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="{% url 'reject_appointment' appt.id %}" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Reject this appointment?')">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-check-double"></i>
+                <p>No pending appointments</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Approved - Ready for Vaccination -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-calendar-check"></i> Approved — Ready for Vaccination</h3>
+            <span class="badge badge-success">{{ total_approved }}</span>
+        </div>
+        <div class="card-body">
+            {% if approved %}
+            <div class="appointment-list">
+                {% for appt in approved %}
+                <div class="appointment-card">
+                    <div class="appointment-info">
+                        <h4>{{ appt.child.name }}</h4>
+                        <p><i class="fas fa-syringe"></i> {{ appt.vaccine.name }}</p>
+                        <p><i class="fas fa-hospital"></i> {{ appt.hospital.name }}</p>
+                        <p><i class="fas fa-calendar"></i> {{ appt.preferred_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="appointment-actions">
+                        <form method="post" action="{% url 'complete_vaccination' appt.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="notes" value="">
+                            <button type="submit" class="btn btn-sm btn-primary"
+                                onclick="return confirm('Mark vaccination as complete?')">
+                                <i class="fas fa-check-double"></i> Complete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-calendar"></i>
+                <p>No approved appointments pending vaccination</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Vaccine Stock -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-boxes-stacked"></i> Vaccine Stock</h3>
+    </div>
+    <div class="card-body">
+        {% if vaccine_stock %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Vaccine</th>
+                        <th>Dose</th>
+                        <th>Recommended Age</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in vaccine_stock %}
+                    <tr>
+                        <td><strong>{{ v.name }}</strong></td>
+                        <td>Dose {{ v.dose_number }}</td>
+                        <td>{{ v.recommended_age_months }} months</td>
+                        <td>{{ v.stock }}</td>
+                        <td>
+                            {% if v.stock > 50 %}
+                            <span class="status-badge status-completed">In Stock</span>
+                            {% elif v.stock > 10 %}
+                            <span class="status-badge status-approved">Low</span>
+                            {% else %}
+                            <span class="status-badge status-rejected">Critical</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <i class="fas fa-box-open"></i>
+            <p>No vaccines in stock database</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Records -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-history"></i> Recent Vaccination Records</h3>
+        <a href="{% url 'all_records' %}" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <div class="card-body">
+        {% if recent_records %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Child</th>
+                        <th>Vaccine</th>
+                        <th>Date</th>
+                        <th>Certificate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in recent_records %}
+                    <tr>
+                        <td><strong>{{ rec.child.name }}</strong></td>
+                        <td>{{ rec.vaccine.name }}</td>
+                        <td>{{ rec.date_administered|date:"M d, Y" }}</td>
+                        <td>
+                            {% if rec.certificate %}
+                            <a href="{% url 'staff_certificate_view' rec.id %}" class="btn btn-xs btn-outline">
+                                <i class="fas fa-certificate"></i> View
+                            </a>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <i class="fas fa-file-medical"></i>
+            <p>No records yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

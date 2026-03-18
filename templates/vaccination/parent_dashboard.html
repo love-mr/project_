@@ -1,0 +1,174 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Parent Dashboard — VaxCare{% endblock %}
+{% block page_title %}Parent Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2)">
+            <i class="fas fa-children"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ total_children }}</span>
+            <span class="stat-label">My Children</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f6d365, #fda085)">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ pending_count }}</span>
+            <span class="stat-label">Pending</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb)">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ approved_count }}</span>
+            <span class="stat-label">Approved</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7)">
+            <i class="fas fa-shield-virus"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-number">{{ completed_count }}</span>
+            <span class="stat-label">Completed</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Children List -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-children"></i> My Children</h3>
+            <a href="{% url 'add_child' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Child
+            </a>
+        </div>
+        <div class="card-body">
+            {% if children %}
+            <div class="children-grid">
+                {% for child in children %}
+                <div class="child-card" onclick="window.location='{% url 'child_detail' child.id %}'">
+                    <div class="child-avatar">
+                        {% if child.gender == 'M' %}
+                        <i class="fas fa-mars" style="color: #4facfe;"></i>
+                        {% elif child.gender == 'F' %}
+                        <i class="fas fa-venus" style="color: #f093fb;"></i>
+                        {% else %}
+                        <i class="fas fa-genderless" style="color: #764ba2;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="child-info">
+                        <h4>{{ child.name }}</h4>
+                        <p><i class="fas fa-cake-candles"></i> {{ child.age_display }}</p>
+                        <p><i class="fas fa-tint"></i> {{ child.blood_group }}</p>
+                    </div>
+                    <div class="child-actions">
+                        <a href="{% url 'book_appointment' %}?child={{ child.id }}" class="btn btn-xs btn-outline"
+                            title="Book vaccine">
+                            <i class="fas fa-syringe"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-baby"></i>
+                <p>No children added yet</p>
+                <a href="{% url 'add_child' %}" class="btn btn-primary">Add Your First Child</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upcoming Reminders -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-bell"></i> Upcoming Reminders</h3>
+        </div>
+        <div class="card-body">
+            {% if reminders %}
+            <div class="reminder-list">
+                {% for appt in reminders %}
+                <div class="reminder-item">
+                    <div class="reminder-date">
+                        <span class="date-day">{{ appt.preferred_date|date:"d" }}</span>
+                        <span class="date-month">{{ appt.preferred_date|date:"M" }}</span>
+                    </div>
+                    <div class="reminder-info">
+                        <strong>{{ appt.child.name }}</strong> — {{ appt.vaccine.name }}
+                        <span class="reminder-hospital">
+                            <i class="fas fa-hospital"></i> {{ appt.hospital.name }}
+                        </span>
+                    </div>
+                    <span class="status-badge status-approved">Approved</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-calendar-check"></i>
+                <p>No upcoming appointments</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Appointments -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-calendar-alt"></i> Recent Appointments</h3>
+        <a href="{% url 'book_appointment' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus"></i> New Appointment
+        </a>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Child</th>
+                        <th>Vaccine</th>
+                        <th>Hospital</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appt in appointments %}
+                    <tr>
+                        <td><strong>{{ appt.child.name }}</strong></td>
+                        <td>{{ appt.vaccine.name }}</td>
+                        <td>{{ appt.hospital.name }}</td>
+                        <td>{{ appt.preferred_date|date:"M d, Y" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ appt.status }}">
+                                {{ appt.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <i class="fas fa-calendar"></i>
+            <p>No appointments yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Child Vaccination Management System — Track, schedule, and manage your child's vaccinations easily.">
+    <title>{% block title %}Child Vaccination{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-syringe"></i>
+                <span>VaxCare</span>
+            </div>
+            <button class="sidebar-close" id="sidebarClose" aria-label="Close sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-nav">
+            {% if user.is_authenticated %}
+            {% if user.is_parent %}
+            <a href="{% url 'parent_dashboard' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'parent_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'add_child' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'add_child' %}active{% endif %}">
+                <i class="fas fa-child"></i><span>Add Child</span>
+            </a>
+            <a href="{% url 'book_appointment' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'book_appointment' %}active{% endif %}">
+                <i class="fas fa-calendar-plus"></i><span>Book Appointment</span>
+            </a>
+            <a href="{% url 'vaccination_records' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'vaccination_records' %}active{% endif %}">
+                <i class="fas fa-file-medical"></i><span>Records</span>
+            </a>
+            {% elif user.is_staff_member %}
+            <a href="{% url 'staff_dashboard' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'all_children' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'all_children' %}active{% endif %}">
+                <i class="fas fa-children"></i><span>All Children</span>
+            </a>
+            <a href="{% url 'all_records' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'all_records' %}active{% endif %}">
+                <i class="fas fa-clipboard-list"></i><span>All Records</span>
+            </a>
+            {% endif %}
+            <div class="nav-divider"></div>
+            <a href="{% url 'logout' %}" class="nav-link nav-link-danger">
+                <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+            </a>
+            {% else %}
+            <a href="{% url 'home' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="fas fa-home"></i><span>Home</span>
+            </a>
+            <a href="{% url 'login' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                <i class="fas fa-sign-in-alt"></i><span>Login</span>
+            </a>
+            <a href="{% url 'register' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">
+                <i class="fas fa-user-plus"></i><span>Register</span>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="sidebar-footer">
+            <div class="user-badge">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">{{ user.username }}</span>
+                    <span class="user-role">
+                        {% if user.is_parent %}Parent{% elif user.is_staff_member %}Staff{% else %}Admin{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="hamburger" id="hamburger" aria-label="Open menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-title">
+                <h1>{% block page_title %}Child Vaccination{% endblock %}</h1>
+            </div>
+            <div class="topbar-actions">
+                {% if user.is_authenticated %}
+                <span class="topbar-user">
+                    <i class="fas fa-user-circle"></i> {{ user.username }}
+                </span>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" data-auto-dismiss>
+                <span>{{ message }}</span>
+                <button class="alert-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="{% static 'js/scripts.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
