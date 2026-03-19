@@ -9,6 +9,7 @@ class User(AbstractUser):
     """Custom user supporting Parent, Staff, and Admin roles."""
     is_parent = models.BooleanField(default=False)
     is_staff_member = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
     phone = models.CharField(max_length=15, blank=True)
 
     def __str__(self):

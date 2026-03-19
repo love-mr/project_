@@ -1,4 +1,4 @@
-keerthi
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -38,9 +38,17 @@ def staff_required(view_func):
 # ─── Authentication ──────────────────────────────────────────────────
 def home(request):
     """Landing page."""
-    total_children = Child.objects.count()
-    total_vaccinations = VaccinationRecord.objects.count()
     total_hospitals = Hospital.objects.filter(is_active=True).count()
+
+    # Show stats only for logged-in parents (their own children/records).
+    # Guests and non-parent users will see zeros (so the counters reflect "their" data).
+    if request.user.is_authenticated and request.user.is_parent:
+        total_children = Child.objects.filter(parent=request.user).count()
+        total_vaccinations = VaccinationRecord.objects.filter(child__parent=request.user).count()
+    else:
+        total_children = 0
+        total_vaccinations = 0
+
     context = {
         'total_children': total_children,
         'total_vaccinations': total_vaccinations,
@@ -89,21 +97,12 @@ def login_view(request):
             messages.error(request, '❌ Captcha answer is incorrect.')
             return redirect('login')
 
-        # Admin fixed credentials
+        # Admin authentication (superuser)
         if user_type == 'admin':
-            if username == 'Devil' and password == 'Devil':
-                user = authenticate(request, username=username, password=password)
-                if user is None:
-                    try:
-                        user = User.objects.create_superuser(
-                            username='Devil', email='admin@vaccination.com', password='Devil'
-                        )
-                    except Exception:
-                        user = User.objects.get(username='Devil')
-                        user = authenticate(request, username=username, password=password)
-                if user:
-                    login(request, user)
-                    return redirect('admin:index')
+            user = authenticate(request, username=username, password=password)
+            if user is not None and user.is_superuser:
+                login(request, user)
+                return redirect('admin:index')
             messages.error(request, '❌ Invalid admin credentials.')
             return redirect('login')
 
@@ -125,8 +124,17 @@ def login_view(request):
     # Generate captcha
     a, b = random.randint(1, 9), random.randint(1, 9)
     request.session['captcha_val'] = a + b
+    
+    # Stats for login page
+    total_children = Child.objects.count()
+    total_vaccinations = VaccinationRecord.objects.count()
+    total_hospitals = Hospital.objects.filter(is_active=True).count()
+    
     return render(request, 'vaccination/login.html', {
         'captcha_q': f"{a} + {b} = ?",
+        'total_children': total_children,
+        'total_vaccinations': total_vaccinations,
+        'total_hospitals': total_hospitals,
     })
 
 
