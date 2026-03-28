@@ -12,9 +12,15 @@ class User(AbstractUser):
     is_admin = models.BooleanField(default=False)
     phone = models.CharField(max_length=15, blank=True)
 
+    # Email verification fields
+    email_verified = models.BooleanField(default=False)
+    email_verification_code = models.CharField(max_length=6, blank=True, null=True)
+    email_verification_code_created_at = models.DateTimeField(blank=True, null=True)
+
     def __str__(self):
         role = 'Parent' if self.is_parent else ('Staff' if self.is_staff_member else 'Admin')
-        return f"{self.username} ({role})"
+        verified = '✓' if self.email_verified else '✗'
+        return f"{self.username} ({role}, email_verified={verified})"
 
 
 class Child(models.Model):

@@ -59,9 +59,19 @@
         <button onclick="window.print()" class="btn btn-primary">
             <i class="fas fa-print"></i> Print Certificate
         </button>
-        <a href="{% url 'parent_dashboard' %}" class="btn btn-outline">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
+        {% if request.user.is_staff_member %}
+            <a href="{% url 'staff_dashboard' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        {% elif request.user.is_parent %}
+            <a href="{% url 'parent_dashboard' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        {% else %}
+            <a href="{% url 'home' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

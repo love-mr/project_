@@ -7,6 +7,8 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('verify-email/', views.verify_email, name='verify_email'),
+    path('verify-email/resend/', views.resend_verification_code, name='resend_verification_code'),
 
     # ─── Parent ────────────────────────────────────────────
     path('parent/', views.parent_dashboard, name='parent_dashboard'),

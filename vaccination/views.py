@@ -3,8 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Count, Q
+from django.utils import timezone
 from datetime import date, timedelta
 import random
 
@@ -20,19 +22,63 @@ from .utils import (
 
 # ─── Decorators ──────────────────────────────────────────────────────
 def parent_required(view_func):
-    """Only allow Parent users."""
+    """Only allow verified Parent users."""
+    def check_parent(u):
+        if not u.is_parent:
+            return False
+        if not u.email_verified:
+            return False
+        return True
+
     decorated = login_required(
-        user_passes_test(lambda u: u.is_parent, login_url='login')(view_func)
+        user_passes_test(check_parent, login_url='verify_email')(view_func)
     )
     return decorated
 
 
 def staff_required(view_func):
-    """Only allow Staff users."""
+    """Only allow verified Staff users."""
+    def check_staff(u):
+        if not u.is_staff_member:
+            return False
+        if not u.email_verified:
+            return False
+        return True
+
     decorated = login_required(
-        user_passes_test(lambda u: u.is_staff_member, login_url='login')(view_func)
+        user_passes_test(check_staff, login_url='verify_email')(view_func)
     )
     return decorated
+
+
+def send_verification_email(user):
+    """Generate and send a verification code to the user's email."""
+    code = f"{random.randint(100000,999999)}"
+    user.email_verification_code = code
+    user.email_verification_code_created_at = timezone.now()
+    user.email_verified = False
+    user.save()
+
+    email_subject = 'Verify your email for Child Vaccination'
+    email_body = (
+        f"Hello {user.username},\n\n"
+        f"Your verification code is: {code}\n"
+        "This code is valid for 15 minutes.\n\n"
+        "Thank you!"
+    )
+    try:
+        send_mail(
+            email_subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        # Log exact SMTP failure so you can correct config/login details
+        print(f"[Email error] {e}")
+        return False
+    return True
 
 
 # ─── Authentication ──────────────────────────────────────────────────
@@ -67,9 +113,13 @@ def register(request):
         else:
             form = ParentRegistrationForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, '✅ Account created successfully! Please log in.')
-            return redirect('login')
+            user = form.save()
+            if not send_verification_email(user):
+                messages.error(request, '❌ Could not send verification email. Check SMTP settings.')
+                return redirect('register')
+            login(request, user)
+            messages.success(request, '✅ Account created successfully! Check your email for verification code.')
+            return redirect('verify_email')
         else:
             messages.error(request, '❌ Please correct the errors below.')
     else:
@@ -110,9 +160,17 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             if user_type == 'parent' and user.is_parent:
+                if not user.email_verified:
+                    login(request, user)
+                    messages.warning(request, '✅ Please verify your email before using the system.')
+                    return redirect('verify_email')
                 login(request, user)
                 return redirect('parent_dashboard')
             elif user_type == 'staff' and user.is_staff_member:
+                if not user.email_verified:
+                    login(request, user)
+                    messages.warning(request, '✅ Please verify your email before using the system.')
+                    return redirect('verify_email')
                 login(request, user)
                 return redirect('staff_dashboard')
             else:
@@ -136,6 +194,57 @@ def login_view(request):
         'total_vaccinations': total_vaccinations,
         'total_hospitals': total_hospitals,
     })
+
+
+def resend_verification_code(request):
+    """Resend verification code to user email."""
+    if not request.user.is_authenticated:
+        messages.error(request, '❌ Please log in to resend verification code.')
+        return redirect('login')
+
+    if request.user.email_verified:
+        messages.info(request, '✅ Your email is already verified.')
+        return redirect('parent_dashboard' if request.user.is_parent else 'staff_dashboard')
+
+    if not send_verification_email(request.user):
+        messages.error(request, '❌ Could not send verification code. Check SMTP settings.')
+        return redirect('verify_email')
+
+    messages.success(request, '✅ New verification code sent to your email.')
+    return redirect('verify_email')
+
+
+def verify_email(request):
+    """Verify email address after account registration."""
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not request.user.is_authenticated:
+            messages.error(request, '❌ Please log in before verifying email.')
+            return redirect('login')
+
+        if request.user.email_verified:
+            messages.info(request, '✅ Email already verified.')
+            return redirect('parent_dashboard' if request.user.is_parent else 'staff_dashboard')
+
+        code_expiry = request.user.email_verification_code_created_at + timedelta(minutes=15) if request.user.email_verification_code_created_at else None
+        if not request.user.email_verification_code_created_at or timezone.now() > code_expiry:
+            messages.error(request, '❌ Verification code expired. Please resend code and try again.')
+            return redirect('verify_email')
+
+        if request.user.email_verification_code == code:
+            request.user.email_verified = True
+            request.user.email_verification_code = ''
+            request.user.email_verification_code_created_at = None
+            request.user.save()
+            messages.success(request, '✅ Email verified successfully. You can now access your dashboard.')
+            if request.user.is_parent:
+                return redirect('parent_dashboard')
+            return redirect('staff_dashboard')
+
+        messages.error(request, '❌ Invalid verification code. Please try again.')
+        return redirect('verify_email')
+
+    return render(request, 'vaccination/verify_email.html')
 
 
 def logout_view(request):
@@ -250,7 +359,7 @@ def book_appointment(request):
                     f'({appointment.vaccine.name}) at {appointment.hospital.name} '
                     f'on {appointment.preferred_date} has been booked.\n'
                     f'Status: Pending approval.\n\nThank you!',
-                    'noreply@childvaccination.com',
+                    settings.DEFAULT_FROM_EMAIL,
                     [request.user.email],
                     fail_silently=True,
                 )
@@ -332,7 +441,11 @@ def staff_dashboard(request):
 @staff_required
 def approve_appointment(request, appt_id):
     """Approve a pending appointment."""
-    appt = get_object_or_404(Appointment, id=appt_id, status='pending')
+    appt = Appointment.objects.filter(id=appt_id, status='pending').first()
+    if not appt:
+        messages.error(request, '❌ Appointment not found or already processed.')
+        return redirect('staff_dashboard')
+
     appt.status = 'approved'
     appt.save()
 
@@ -345,7 +458,7 @@ def approve_appointment(request, appt_id):
             f'({appt.vaccine.name}) at {appt.hospital.name} '
             f'on {appt.preferred_date} has been APPROVED.\n\n'
             f'Please arrive on time.\n\nThank you!',
-            'noreply@childvaccination.com',
+            settings.DEFAULT_FROM_EMAIL,
             [appt.child.parent.email],
             fail_silently=True,
         )
@@ -382,7 +495,7 @@ def complete_vaccination(request, appt_id):
     )
 
     # Generate certificate
-    Certificate.objects.create(record=record)
+    cert = Certificate.objects.create(record=record)
 
     # Update appointment status
     appt.status = 'completed'
@@ -394,9 +507,26 @@ def complete_vaccination(request, appt_id):
         vaccine.stock -= 1
         vaccine.save()
 
+    # Send certificate email to parent
+    try:
+        send_mail(
+            'Vaccination Completed: Certificate Issued',
+            f'Hello {appt.child.parent.username},\n\n'
+            f'Vaccination for {appt.child.name} ({appt.vaccine.name}) has been completed.\n'
+            f'Certificate ID: {cert.certificate_id}\n'
+            f'Date: {cert.issued_at.strftime("%Y-%m-%d %H:%M") if cert.issued_at else "N/A"}\n\n'
+            'You can login and view/download your certificate from your dashboard.\n\n'
+            'Thank you!\n',
+            settings.DEFAULT_FROM_EMAIL,
+            [appt.child.parent.email],
+            fail_silently=True,
+        )
+    except Exception:
+        messages.warning(request, '⚠️ Certificate email could not be sent; please check SMTP settings.')
+
     messages.success(
         request,
-        f'✅ Vaccination completed for {appt.child.name}! Certificate generated.'
+        f'✅ Vaccination completed for {appt.child.name}! Certificate generated and emailed to parent.'
     )
     return redirect('staff_dashboard')
 
