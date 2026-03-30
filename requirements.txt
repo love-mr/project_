@@ -1,3 +1,4 @@
 Django>=4.2,<5
 # If you want MongoDB/Djongo instead of SQLite for production, add:
 # djongo
+gunicorn

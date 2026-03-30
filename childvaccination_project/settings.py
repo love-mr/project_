@@ -76,7 +76,12 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static'
+]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Use Google SMTP to send actual emails to parents
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
