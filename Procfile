@@ -1,0 +1,1 @@
+web: gunicorn childvaccination_project.wsgi

@@ -3,11 +3,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-childvax-2024-secret-key-change-in-prod'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-childvax-2024-secret-key-change-in-prod')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -85,12 +85,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Use Google SMTP to send actual emails to parents
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
 
-EMAIL_HOST_USER = 'wecandoit766@gmail.com'
-EMAIL_HOST_PASSWORD = 'wavrtpzqbmbqyuus'  # 16-char generated app password (no spaces)
-DEFAULT_FROM_EMAIL = 'wecandoit766@gmail.com'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'wecandoit766@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'wavrtpzqbmbqyuus')  # 16-char generated app password (no spaces)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'wecandoit766@gmail.com')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
