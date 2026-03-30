@@ -1,0 +1,38 @@
+{% extends 'vaccination/base.html' %}
+
+{% block title %}Verify Email — VaxCare{% endblock %}
+{% block page_title %}Verify Email{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h2>Verify your email</h2>
+            <p>Enter the code sent to your email address.</p>
+        </div>
+
+        <form method="post" action="{% url 'verify_email' %}" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" class="form-input" maxlength="6" required autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-check"></i> Verify Email
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Did not receive the code? Please check spam folder.</p>
+            <form method="post" action="{% url 'resend_verification_code' %}" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-block">Resend code</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

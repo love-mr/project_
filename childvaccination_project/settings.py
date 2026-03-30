@@ -78,6 +78,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Use Google SMTP to send actual emails to parents
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'wecandoit766@gmail.com'
+EMAIL_HOST_PASSWORD = 'wavrtpzqbmbqyuus'  # 16-char generated app password (no spaces)
+DEFAULT_FROM_EMAIL = 'wecandoit766@gmail.com'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
