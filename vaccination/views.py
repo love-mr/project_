@@ -1,4 +1,6 @@
 
+from urllib import request
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -6,7 +8,9 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Count, Q
-from django.utils import timezone
+from django.u
+
+from httpx import requesttils import timezone
 from datetime import date, timedelta
 import random
 
@@ -51,8 +55,9 @@ def staff_required(view_func):
     return decorated
 
 
+import threading
+
 def send_verification_email(user):
-    """Generate and send a verification code to the user's email."""
     code = f"{random.randint(100000,999999)}"
     user.email_verification_code = code
     user.email_verification_code_created_at = timezone.now()
@@ -66,18 +71,22 @@ def send_verification_email(user):
         "This code is valid for 15 minutes.\n\n"
         "Thank you!"
     )
-    try:
-        send_mail(
-            email_subject,
-            email_body,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-    except Exception as e:
-        # Log exact SMTP failure so you can correct config/login details
-        print(f"[Email error] {e}")
-        return False
+
+    def send():
+        try:
+            send_mail(
+                email_subject,
+                email_body,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=True
+            )
+        except Exception as e:
+            print(f"[Email error] {e}")
+
+    # 🔥 BACKGROUND THREAD (THIS FIXES YOUR ERROR)
+    threading.Thread(target=send).start()
+
     return True
 
 
@@ -114,12 +123,11 @@ def register(request):
             form = ParentRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            if not send_verification_email(user):
-                messages.error(request, '❌ Could not send verification email. Check SMTP settings.')
-                return redirect('register')
+            send_verification_email(user)   # 🔥 don't wait for result
             login(request, user)
             messages.success(request, '✅ Account created successfully! Check your email for verification code.')
             return redirect('verify_email')
+            
         else:
             messages.error(request, '❌ Please correct the errors below.')
     else:
@@ -206,7 +214,7 @@ def resend_verification_code(request):
         messages.info(request, '✅ Your email is already verified.')
         return redirect('parent_dashboard' if request.user.is_parent else 'staff_dashboard')
 
-    if not send_verification_email(request.user):
+    if send_verification_email(request.user):
         messages.error(request, '❌ Could not send verification code. Check SMTP settings.')
         return redirect('verify_email')
 
